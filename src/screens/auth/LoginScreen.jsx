@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import InputField from "../../components/InputField";
 import PrimaryButton from "../../components/PrimaryButton";
 import api from "../../services/api";
-import { saveToken } from "../../services/token.service";
 import { COLORS } from "../../styles/constants/colors";
+import { AuthContext } from "../../context/AuthContext";
 
 export default function LoginScreen({ navigation }) {
+  const { login } = useContext(AuthContext);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -25,9 +26,8 @@ export default function LoginScreen({ navigation }) {
         password,
       });
 
-      await saveToken(data.token);
+      await login(data.token, data.usuario);
 
-      navigation.replace("Home");
     } catch (error) {
       Alert.alert(
         "Error",
