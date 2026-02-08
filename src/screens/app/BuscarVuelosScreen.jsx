@@ -1,13 +1,21 @@
 import { useEffect, useState, useContext } from "react";
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
 import api from "../../services/api";
 import { COLORS } from "../../styles/constants/colors";
+import { AuthContext } from "../../context/AuthContext";
 
 export default function BuscarVuelosScreen({ navigation }) {
   const [vuelos, setVuelos] = useState([]);
   const [loading, setLoading] = useState(true);
   const { logout } = useContext(AuthContext);
-  logout();
+
   const cargarVuelos = async () => {
     try {
       const { data } = await api.get("/vuelos");
@@ -33,7 +41,12 @@ export default function BuscarVuelosScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Vuelos disponibles</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>Vuelos disponibles</Text>
+        <TouchableOpacity onPress={logout}>
+          <Text style={styles.logout}>Salir</Text>
+        </TouchableOpacity>
+      </View>
 
       <FlatList
         data={vuelos}
@@ -67,11 +80,20 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primaryDark,
     padding: 16,
   },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
   title: {
     color: COLORS.white,
     fontSize: 22,
     fontWeight: "bold",
-    marginBottom: 16,
+  },
+  logout: {
+    color: COLORS.lightGray,
+    fontWeight: "bold",
   },
   card: {
     backgroundColor: COLORS.white,
