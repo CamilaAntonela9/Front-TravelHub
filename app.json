@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Front-TravelHub",
-    "slug": "front-travelhub", 
+    "slug": "front-travelhub",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -21,7 +21,11 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#1C2D41"
-      }
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "plugins": [
       [
@@ -33,8 +37,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "ca145540-16f9-45e8-be79-e64541eced86"
+        "projectId": "262e82fb-b547-47a7-8ca0-f633e5e2dada"
       }
-    }
+    },
+    "owner": "caobando9"
   }
 }
