@@ -558,33 +558,3 @@ Si deseas contribuir al proyecto:
 4. Push a la rama (`git push origin feature/AmazingFeature`)
 5. Abre un Pull Request
 
-### Guía de Estilo
-
-- Usa **ESLint** para mantener consistencia
-- Sigue las convenciones de **React Native**
-- Documenta funciones complejas
-- Escribe mensajes de commit descriptivos
-
-## Licencia
-
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
-
-## Autores y Reconocimientos
-
-- **Equipo de Desarrollo TravelHub**
-- Agradecimientos especiales a la comunidad de React Native y Expo
-
-## Contacto y Soporte
-
-Para reportar bugs, solicitar features o hacer preguntas:
-
-- Issues: [GitHub Issues](https://github.com/tu-usuario/front-travelhub/issues)
-- Email: support@travelhub.com
-- Documentación: [Wiki del Proyecto](https://github.com/tu-usuario/front-travelhub/wiki)
-
----
-
-<div align="center">
-  <p>Desarrollado con dedicación para revolucionar la gestión de viajes</p>
-  <p>© 2025 TravelHub. Todos los derechos reservados.</p>
-</div>
