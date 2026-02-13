@@ -509,15 +509,6 @@ export const COLORS = {
 />
 ```
 
-## Capturas de Pantalla
-
-> **Nota**: Agrega capturas de pantalla de las principales funcionalidades:
-> - Pantalla de login
-> - Búsqueda de vuelos
-> - Proceso de reserva
-> - QR de abordaje
-> - Panel de administración
-
 ## Testing
 
 ### Pruebas Manuales Realizadas
