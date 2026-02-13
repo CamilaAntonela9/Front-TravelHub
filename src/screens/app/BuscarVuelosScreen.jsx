@@ -1,181 +1,168 @@
+import React, { useState, useEffect } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  Alert,
+  View, Text, StyleSheet, TextInput, FlatList,
+  TouchableOpacity, ActivityIndicator
 } from "react-native";
-import { useEffect, useState, useContext } from "react";
-import { AuthContext } from "../../context/AuthContext";
-import { obtenerVuelos, eliminarVuelo } from "../../services/vuelo.service";
+import api from "../../services/api";
 import { COLORS } from "../../styles/constants/colors";
 
 export default function BuscarVuelosScreen({ navigation }) {
-  const { user } = useContext(AuthContext);
   const [vuelos, setVuelos] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const cargarVuelos = async () => {
+  const [origen, setOrigen] = useState("");
+  const [destino, setDestino] = useState("");
+  const [fecha, setFecha] = useState("");
+  const [minPrecio, setMinPrecio] = useState("");
+  const [maxPrecio, setMaxPrecio] = useState("");
+
+  useEffect(() => {
+    handleBuscar();
+  }, []);
+
+  const handleBuscar = async () => {
     try {
       setLoading(true);
-      const data = await obtenerVuelos();
-      setVuelos(data);
+      const params = {
+        origen: origen.trim() || undefined,
+        destino: destino.trim() || undefined,
+        fecha: fecha.trim() || undefined,
+        minPrecio: minPrecio || undefined,
+        maxPrecio: maxPrecio || undefined
+      };
+      const response = await api.get("/vuelos/buscar", { params });
+      setVuelos(response.data);
     } catch (error) {
-      Alert.alert("Error", "No se pudieron cargar los vuelos");
+      console.error("Error buscando vuelos:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    cargarVuelos();
-  }, []);
-
-  const confirmarEliminar = (id) => {
-    Alert.alert(
-      "Eliminar vuelo",
-      "¿Seguro que deseas eliminar este vuelo?",
-      [
-        { text: "Cancelar" },
-        {
-          text: "Eliminar",
-          style: "destructive",
-          onPress: () => eliminar(id),
-        },
-      ]
-    );
-  };
-
-  const eliminar = async (id) => {
-    try {
-      await eliminarVuelo(id);
-      cargarVuelos();
-    } catch (error) {
-      Alert.alert("Error", "No se pudo eliminar el vuelo");
-    }
-  };
-
-  const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      <Text style={styles.title}>
-        {item.origen} → {item.destino}
-      </Text>
-      <Text>Fecha: {item.fecha}</Text>
-      <Text>Precio: ${item.precio}</Text>
-
-      {/* USER */}
-      {user.rol === "USER" && (
-        <TouchableOpacity
-          style={styles.btn}
-          onPress={() =>
-            navigation.navigate("Pasajero", { vuelo: item })
-          }
-        >
-          <Text style={styles.btnText}>Reservar</Text>
-        </TouchableOpacity>
-      )}
-
-      {/* ADMIN */}
-      {user.rol === "ADMIN" && (
-        <View style={styles.adminActions}>
-          <TouchableOpacity
-            style={styles.edit}
-            onPress={() =>
-              navigation.navigate("AdminCrearVuelo", { vuelo: item })
-            }
-          >
-            <Text>Editar</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.delete}
-            onPress={() => confirmarEliminar(item.id)}
-          >
-            <Text style={{ color: "white" }}>Eliminar</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </View>
+  const renderVuelo = ({ item }) => (
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => navigation.navigate("Pasajero", { vuelo: item })}
+    >
+      <View style={styles.cardRow}>
+        <Text style={styles.ciudades}>{item.origen} ➔ {item.destino}</Text>
+        <Text style={styles.precio}>${item.precio}</Text>
+      </View>
+      <View style={styles.divider} />
+      <Text style={styles.detalles}>📅 {item.fecha_salida}  •  ⏰ {item.hora_salida}</Text>
+    </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
-      <Text style={styles.screenTitle}>Vuelos disponibles</Text>
+      <Text style={styles.title}>Explorar Vuelos</Text>
 
-      {user.rol === "ADMIN" && (
-        <TouchableOpacity
-          style={styles.createBtn}
-          onPress={() => navigation.navigate("AdminCrearVuelo")}
-        >
-          <Text style={styles.createText}>+ Crear vuelo</Text>
+      <View style={styles.filterSection}>
+        <TextInput
+          style={styles.inputFull}
+          placeholder="Ciudad de Origen"
+          placeholderTextColor="#888" 
+          value={origen}
+          onChangeText={setOrigen}
+        />
+        <TextInput
+          style={styles.inputFull}
+          placeholder="Ciudad de Destino"
+          placeholderTextColor="#888" 
+          value={destino}
+          onChangeText={setDestino}
+        />
+
+        <View style={styles.row}>
+          <TextInput
+            style={[styles.inputHalf, { flex: 2 }]}
+            placeholder="Fecha"
+            placeholderTextColor="#888" 
+            value={fecha}
+            onChangeText={setFecha}
+          />
+          <TextInput
+            style={styles.inputHalf}
+            placeholder="Min $"
+            placeholderTextColor="#888"
+            keyboardType="numeric"
+            value={minPrecio}
+            onChangeText={setMinPrecio}
+          />
+          <TextInput
+            style={styles.inputHalf}
+            placeholder="Max $"
+            placeholderTextColor="#888"
+            keyboardType="numeric"
+            value={maxPrecio}
+            onChangeText={setMaxPrecio}
+          />
+        </View>
+
+        <TouchableOpacity style={styles.btnBuscar} onPress={handleBuscar}>
+          <Text style={styles.btnText}>🔍 Aplicar Filtros</Text>
         </TouchableOpacity>
-      )}
+      </View>
 
-      <FlatList
-        data={vuelos}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={renderItem}
-        refreshing={loading}
-        onRefresh={cargarVuelos}
-      />
+      {loading ? (
+        <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 20 }} />
+      ) : (
+        <FlatList
+          data={vuelos}
+          keyExtractor={(item) => item.id_vuelo.toString()}
+          renderItem={renderVuelo}
+          ListEmptyComponent={
+            <Text style={styles.empty}>No hay vuelos que coincidan con tu búsqueda.</Text>
+          }
+          contentContainerStyle={{ paddingBottom: 20 }}
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: COLORS.primaryDark,
+  container: { flex: 1, backgroundColor: COLORS.primaryDark, padding: 20 },
+  title: { color: 'white', fontSize: 24, fontWeight: 'bold', marginTop: 40, marginBottom: 15 },
+  filterSection: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    padding: 15,
+    borderRadius: 20,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)'
   },
-  screenTitle: {
-    color: COLORS.white,
-    fontSize: 20,
-    marginBottom: 12,
-  },
-  createBtn: {
-    backgroundColor: COLORS.primary,
-    padding: 12,
+  inputFull: {
+    backgroundColor: 'white',
     borderRadius: 10,
-    marginBottom: 16,
+    padding: 12,
+    marginBottom: 10,
+    fontSize: 14,
+    color: '#000' // <-- CORREGIDO
   },
-  createText: {
-    color: "white",
-    textAlign: "center",
-    fontWeight: "600",
+  row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 },
+  inputHalf: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 12,
+    flex: 1,
+    marginHorizontal: 2,
+    fontSize: 13,
+    color: '#000' // <-- CORREGIDO
   },
-  card: {
-    backgroundColor: "white",
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-  },
-  title: {
-    fontWeight: "600",
-    fontSize: 16,
-  },
-  btn: {
+  btnBuscar: {
     backgroundColor: COLORS.primary,
-    marginTop: 10,
-    padding: 10,
-    borderRadius: 8,
+    padding: 15,
+    borderRadius: 12,
+    alignItems: 'center',
+    elevation: 3
   },
-  btnText: {
-    color: "white",
-    textAlign: "center",
-  },
-  adminActions: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 10,
-  },
-  edit: {
-    padding: 8,
-  },
-  delete: {
-    backgroundColor: "red",
-    padding: 8,
-    borderRadius: 6,
-  },
+  btnText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
+  card: { backgroundColor: 'white', padding: 18, borderRadius: 15, marginBottom: 15 },
+  cardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  ciudades: { fontSize: 17, fontWeight: 'bold', color: COLORS.primaryDark },
+  precio: { fontSize: 19, fontWeight: 'bold', color: '#10B981' },
+  divider: { height: 1, backgroundColor: '#F3F4F6', marginVertical: 10 },
+  detalles: { color: '#6B7280', fontSize: 13 },
+  empty: { color: 'white', textAlign: 'center', marginTop: 30, opacity: 0.5 }
 });
