@@ -1,15 +1,6 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import api from "./api";
 
-//const TOKEN_KEY = 'travelhub_token';
-
-export const saveToken = async (token) => {
-  await AsyncStorage.setItem("token", token);
-};
-
-export const getToken = async () => {
-  return await AsyncStorage.getItem("token");
-};
-
-export const removeToken = async () => {
-  await AsyncStorage.removeItem("token");
+export const getVuelos = async () => {
+  const response = await api.get("/vuelos");
+  return response.data;
 };
