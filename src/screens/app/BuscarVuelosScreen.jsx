@@ -1,27 +1,28 @@
-import { useEffect, useState, useContext } from "react";
 import {
   View,
   Text,
-  FlatList,
   StyleSheet,
+  FlatList,
   TouchableOpacity,
-  ActivityIndicator,
+  Alert,
 } from "react-native";
-import api from "../../services/api";
-import { COLORS } from "../../styles/constants/colors";
+import { useEffect, useState, useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
+import { obtenerVuelos, eliminarVuelo } from "../../services/vuelo.service";
+import { COLORS } from "../../styles/constants/colors";
 
 export default function BuscarVuelosScreen({ navigation }) {
+  const { user } = useContext(AuthContext);
   const [vuelos, setVuelos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const { logout } = useContext(AuthContext);
+  const [loading, setLoading] = useState(false);
 
   const cargarVuelos = async () => {
     try {
-      const { data } = await api.get("/vuelos");
+      setLoading(true);
+      const data = await obtenerVuelos();
       setVuelos(data);
     } catch (error) {
-      console.log(error.response?.data || error.message);
+      Alert.alert("Error", "No se pudieron cargar los vuelos");
     } finally {
       setLoading(false);
     }
@@ -31,44 +32,92 @@ export default function BuscarVuelosScreen({ navigation }) {
     cargarVuelos();
   }, []);
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-      </View>
+  const confirmarEliminar = (id) => {
+    Alert.alert(
+      "Eliminar vuelo",
+      "¿Seguro que deseas eliminar este vuelo?",
+      [
+        { text: "Cancelar" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: () => eliminar(id),
+        },
+      ]
     );
-  }
+  };
+
+  const eliminar = async (id) => {
+    try {
+      await eliminarVuelo(id);
+      cargarVuelos();
+    } catch (error) {
+      Alert.alert("Error", "No se pudo eliminar el vuelo");
+    }
+  };
+
+  const renderItem = ({ item }) => (
+    <View style={styles.card}>
+      <Text style={styles.title}>
+        {item.origen} → {item.destino}
+      </Text>
+      <Text>Fecha: {item.fecha}</Text>
+      <Text>Precio: ${item.precio}</Text>
+
+      {/* USER */}
+      {user.rol === "USER" && (
+        <TouchableOpacity
+          style={styles.btn}
+          onPress={() =>
+            navigation.navigate("Pasajero", { vuelo: item })
+          }
+        >
+          <Text style={styles.btnText}>Reservar</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* ADMIN */}
+      {user.rol === "ADMIN" && (
+        <View style={styles.adminActions}>
+          <TouchableOpacity
+            style={styles.edit}
+            onPress={() =>
+              navigation.navigate("AdminCrearVuelo", { vuelo: item })
+            }
+          >
+            <Text>Editar</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.delete}
+            onPress={() => confirmarEliminar(item.id)}
+          >
+            <Text style={{ color: "white" }}>Eliminar</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
+  );
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Vuelos disponibles</Text>
-        <TouchableOpacity onPress={logout}>
-          <Text style={styles.logout}>Salir</Text>
+      <Text style={styles.screenTitle}>Vuelos disponibles</Text>
+
+      {user.rol === "ADMIN" && (
+        <TouchableOpacity
+          style={styles.createBtn}
+          onPress={() => navigation.navigate("AdminCrearVuelo")}
+        >
+          <Text style={styles.createText}>+ Crear vuelo</Text>
         </TouchableOpacity>
-      </View>
+      )}
 
       <FlatList
         data={vuelos}
-        keyExtractor={(item) => item.id_vuelo.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Text style={styles.route}>
-              {item.origen} → {item.destino}
-            </Text>
-            <Text>Fecha: {item.fecha_salida}</Text>
-            <Text style={styles.price}>$ {item.precio}</Text>
-
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() =>
-                navigation.navigate("Pasajero", { vuelo: item })
-              }
-            >
-              <Text style={styles.buttonText}>Reservar</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={renderItem}
+        refreshing={loading}
+        onRefresh={cargarVuelos}
       />
     </View>
   );
@@ -77,54 +126,56 @@ export default function BuscarVuelosScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    padding: 16,
     backgroundColor: COLORS.primaryDark,
-    padding: 16,
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  title: {
+  screenTitle: {
     color: COLORS.white,
-    fontSize: 22,
-    fontWeight: "bold",
-  },
-  logout: {
-    color: COLORS.lightGray,
-    fontWeight: "bold",
-  },
-  card: {
-    backgroundColor: COLORS.white,
-    padding: 16,
-    borderRadius: 14,
+    fontSize: 20,
     marginBottom: 12,
   },
-  route: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  price: {
-    marginTop: 6,
-    fontWeight: "bold",
-    color: COLORS.primary,
-  },
-  button: {
-    marginTop: 10,
+  createBtn: {
     backgroundColor: COLORS.primary,
-    padding: 10,
+    padding: 12,
     borderRadius: 10,
+    marginBottom: 16,
   },
-  buttonText: {
-    color: COLORS.white,
+  createText: {
+    color: "white",
     textAlign: "center",
-    fontWeight: "bold",
+    fontWeight: "600",
   },
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: COLORS.primaryDark,
+  card: {
+    backgroundColor: "white",
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  title: {
+    fontWeight: "600",
+    fontSize: 16,
+  },
+  btn: {
+    backgroundColor: COLORS.primary,
+    marginTop: 10,
+    padding: 10,
+    borderRadius: 8,
+  },
+  btnText: {
+    color: "white",
+    textAlign: "center",
+  },
+  adminActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
+  edit: {
+    padding: 8,
+  },
+  delete: {
+    backgroundColor: "red",
+    padding: 8,
+    borderRadius: 6,
   },
 });

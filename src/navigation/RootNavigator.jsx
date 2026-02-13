@@ -1,22 +1,19 @@
-import { useEffect, useState } from 'react';
+import React, { useContext } from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import AuthStack from './AuthStack';
 import AppStack from './AppStack';
-import { getToken } from '../services/token.service';
+import { AuthContext } from '../context/AuthContext';
 
 export default function RootNavigator() {
-  const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { user, loading } = useContext(AuthContext);
 
-  useEffect(() => {
-    const checkSession = async () => {
-      const token = await getToken();
-      if (token) setIsAuthenticated(true);
-      setLoading(false);
-    };
-    checkSession();
-  }, []);
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center' }}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
 
-  if (loading) return null;
-
-  return isAuthenticated ? <AppStack /> : <AuthStack />;
+  return user ? <AppStack /> : <AuthStack />;
 }

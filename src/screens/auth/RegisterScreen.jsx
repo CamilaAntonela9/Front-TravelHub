@@ -70,10 +70,10 @@ export default function RegisterScreen({ navigation }) {
           onChangeText={setPassword}
         />
 
-        {/* ===== SELECTOR DE ROL ===== */}
-        <Text style={styles.roleLabel}>Tipo de cuenta</Text>
+        {/* ===== SELECTOR DE ROL =====
+        <Text style={styles.roleLabel}>Tipo de cuenta</Text> */}
 
-        <View style={styles.roleContainer}>
+        {/* <View style={styles.roleContainer}>
           <TouchableOpacity
             style={[
               styles.roleButton,
@@ -107,7 +107,7 @@ export default function RegisterScreen({ navigation }) {
               Admin
             </Text>
           </TouchableOpacity>
-        </View>
+        </View> */}
 
         <PrimaryButton
           title="Registrarse"

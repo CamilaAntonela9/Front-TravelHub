@@ -1,5 +1,5 @@
-import { useState, useContext } from "react";
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useState, useContext } from "react";
+import { Alert, StyleSheet, Text, TouchableOpacity, View, KeyboardAvoidingView, Platform } from "react-native";
 import InputField from "../../components/InputField";
 import PrimaryButton from "../../components/PrimaryButton";
 import api from "../../services/api";
@@ -13,62 +13,64 @@ export default function LoginScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!email || !password) {
+    const cleanEmail = email.trim();
+    const cleanPassword = password.trim();
+
+    if (!cleanEmail || !cleanPassword) {
       Alert.alert("Error", "Completa todos los campos");
       return;
     }
 
     try {
       setLoading(true);
-
       const { data } = await api.post("/auth/login", {
-        email,
-        password,
+        email: cleanEmail,
+        password: cleanPassword,
       });
 
-      await login(data.token, data.usuario);
-
+      if (data.token && data.usuario) {
+        await login(data.token, data.usuario);
+      }
     } catch (error) {
-      Alert.alert(
-        "Error",
-        error.response?.data?.message || "Credenciales inválidas"
-      );
+      const errorMsg = error.response?.data?.message || "Error de conexión";
+      Alert.alert("Error de Login", errorMsg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === "ios" ? "padding" : "height"} 
+      style={styles.container}
+    >
       <Text style={styles.logo}>TravelHub</Text>
-
       <View style={styles.card}>
         <InputField
           placeholder="Correo electrónico"
           value={email}
           onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
         />
-
         <InputField
           placeholder="Contraseña"
           secureTextEntry
           value={password}
           onChangeText={setPassword}
         />
-
         <PrimaryButton
           title="Iniciar sesión"
           onPress={handleLogin}
           loading={loading}
         />
-
         <TouchableOpacity onPress={() => navigation.navigate("Register")}>
           <Text style={styles.registerText}>
             ¿No tienes cuenta? Regístrate
           </Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
